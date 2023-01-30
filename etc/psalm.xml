@@ -7,6 +7,7 @@
     findUnusedCode="false"
     findUnusedBaselineEntry="false"
     findUnusedVariablesAndParams="false"
+    errorLevel="1"
 >
     <projectFiles>
         <directory name="../src" />
