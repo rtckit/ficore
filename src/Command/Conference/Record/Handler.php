@@ -25,6 +25,7 @@ class Handler extends AbstractHandler
 
         $response = new Response();
         $response->successful = true;
+        $response->medium = $request->medium;
 
         return $request->conference->core->client->api(
             (new ESL\Request\Api())->setParameters("conference {$request->conference->room} {$request->action->value} {$request->medium}")
