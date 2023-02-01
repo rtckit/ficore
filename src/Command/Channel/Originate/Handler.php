@@ -16,7 +16,7 @@ use RTCKit\FiCore\Command\{
     AbstractHandler,
     RequestInterface,
 };
-
+use RTCKit\FiCore\Exception\CoreException;
 use RTCKit\FiCore\Switch\{
     Core,
     HangupCauseEnum,
@@ -37,7 +37,13 @@ class Handler extends AbstractHandler
         $response->originateJobs = [];
 
         if (!isset($request->core)) {
-            $request->core = $this->app->allocateCore();
+            try {
+                $request->core = $this->app->allocateCore();
+            } catch (CoreException $t) {
+                $response->successful = false;
+
+                return resolve($response);
+            }
         }
 
         if ($enterprise) {
