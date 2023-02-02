@@ -503,9 +503,9 @@ class Consumer extends AbstractConsumer
     public function consume(Channel $channel, string $sequence, ?AbstractSignal $signal = null): PromiseInterface
     {
         return $this->app->planProducer->produce($channel, $sequence, $signal)
-            ->then(function (array $elements) use ($channel): PromiseInterface {
+            ->then(function (?array $elements) use ($channel): PromiseInterface {
                 /** @var list<AbstractElement> $elements */
-                if (!count($elements)) {
+                if (empty($elements)) {
                     return resolve();
                 }
 
