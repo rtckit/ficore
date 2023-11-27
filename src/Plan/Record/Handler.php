@@ -60,7 +60,7 @@ class Handler implements HandlerInterface
                     return $this->finalize($element, $deferred);
                 });
         } else {
-            $promise = resolve();
+            $promise = resolve(null);
 
             if (isset($element->playMedium)) {
                 $promise = $element->channel->client->sendMsg(
@@ -76,9 +76,9 @@ class Handler implements HandlerInterface
                     ->then(function (Event $event) use ($element): PromiseInterface {
                         $element->event = $event;
 
-                        return resolve();
+                        return resolve(null);
                     })
-                    ->otherwise(function (Throwable $t) {
+                    ->catch(function (Throwable $t) {
                         $t = $t->getPrevious() ?: $t;
                         $this->app->planConsumer->logger->error("Unhandled record element error: " . $t->getMessage(), [
                             'file' => $t->getFile(),
@@ -134,7 +134,7 @@ class Handler implements HandlerInterface
 
                     return $this->finalize($element, $deferred);
                 })
-                ->otherwise(function (Throwable $t) {
+                ->catch(function (Throwable $t) {
                     $t = $t->getPrevious() ?: $t;
                     $this->app->planConsumer->logger->error("Unhandled record element error: " . $t->getMessage(), [
                         'file' => $t->getFile(),
@@ -169,7 +169,7 @@ class Handler implements HandlerInterface
                 $this->app->signalProducer->produce($signal);
 
                 if (!isset($element->onCompletedSeq)) {
-                    $deferred->resolve();
+                    $deferred->resolve(null);
                 }
             }
 
@@ -178,13 +178,13 @@ class Handler implements HandlerInterface
                     ->then(function () use ($deferred) {
                         $deferred->resolve(true);
 
-                        return resolve();
+                        return resolve(null);
                     });
             }
         } else {
-            $deferred->resolve();
+            $deferred->resolve(null);
         }
 
-        return resolve();
+        return resolve(null);
     }
 }

@@ -169,7 +169,7 @@ class Custom implements HandlerInterface
                         $signal->attn = $event->{"variable_{$this->app->config->appPrefix}_amd_attn"};
 
                         $this->app->signalProducer->produce($signal)
-                            ->otherwise(function (\Throwable $t) {
+                            ->catch(function (\Throwable $t) {
                                 $t = $t->getPrevious() ?: $t;
 
                                 $this->app->eslClient->logger->error('Asynchronous AMD failure: ' . $t->getMessage(), [

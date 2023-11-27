@@ -100,7 +100,7 @@ class Handler implements HandlerInterface
                         });
                 }
 
-                return resolve();
+                return resolve(null);
             })
             ->then(function () use ($element): PromiseInterface {
                 $this->app->planConsumer->logger->info("Entering Conference: Room {$element->room}", $element->flags);
@@ -240,7 +240,7 @@ class Handler implements HandlerInterface
                         });
                 }
 
-                return resolve();
+                return resolve(null);
             })
             ->then(function () use ($element, $digitRealm) {
                 $element->channel->client->sendMsg(
@@ -279,7 +279,7 @@ class Handler implements HandlerInterface
                         });
                 }
             })
-            ->otherwise(function (\Throwable $t) {
+            ->catch(function (\Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
 
                 $this->app->planConsumer->logger->error('Unhandled exception: ' . $t->getMessage(), [
@@ -307,7 +307,7 @@ class Handler implements HandlerInterface
                             $this->app->signalProducer->produce($floorSignal);
                         }
                     } else {
-                        return resolve();
+                        return resolve(null);
                     }
                 }
 

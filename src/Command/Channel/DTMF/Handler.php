@@ -26,7 +26,7 @@ class Handler extends AbstractHandler
 
         $response = new Response();
 
-        if ($request->action !== ActionEnum::Send) {
+        if (!isset($request->action)) {
             $response->successful = false;
 
             return resolve($response);
