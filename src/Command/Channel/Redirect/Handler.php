@@ -25,7 +25,7 @@ class Handler extends AbstractHandler
 
         $response = new Response();
 
-        if ($request->action !== ActionEnum::Redirect) {
+        if (!isset($request->action)) {
             $response->successful = false;
 
             return resolve($response);
@@ -48,17 +48,27 @@ class Handler extends AbstractHandler
             ),
         ])
             ->then(function (array $args) use ($request): PromiseInterface {
-                $destNumber = $args[$this->app->config->appPrefix . '_destination_number']->getBody();
+                $prefixedDestNumber = $args[$this->app->config->appPrefix . '_destination_number'];
 
-                if (($destNumber === '_undef_') || (strpos($destNumber, '-ERR') === 0)) {
+                assert($prefixedDestNumber instanceof ESL\Response\ApiResponse);
+
+                $destNumber = $prefixedDestNumber->getBody();
+
+                if (is_string($destNumber) && (($destNumber === '_undef_') || (strpos($destNumber, '-ERR') === 0))) {
+                    assert($args['destination_number'] instanceof ESL\Response\ApiResponse);
+
                     $destNumber = $args['destination_number']->getBody();
 
+                    assert(is_string($destNumber));
+
                     return $request->channel->core->client->api(
-                        (new ESL\Request\Api())->setParameters("uuid_setvar {$request->channel->uuid} {$this->app->config->appPrefix}_destination_number " . $destNumber)
+                        (new ESL\Request\Api())->setParameters(
+                            "uuid_setvar {$request->channel->uuid} {$this->app->config->appPrefix}_destination_number {$destNumber}"
+                        )
                     );
                 }
 
-                return resolve();
+                return resolve(null);
             })
             ->then(function () use ($request): PromiseInterface {
                 $request->channel->transferInProgress = true;

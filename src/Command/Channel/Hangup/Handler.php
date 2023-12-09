@@ -72,7 +72,7 @@ class Handler extends AbstractHandler
                                 $response->successful = false;
                             }
 
-                            return resolve();
+                            return resolve(null);
                         });
                 }
 

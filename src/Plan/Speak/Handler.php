@@ -56,7 +56,7 @@ class Handler implements HandlerInterface
                 if (!$response->isSuccessful()) {
                     $this->app->planConsumer->logger->error('Speak Failed - ' . ($response->getBody() ?? '<null>'));
 
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $element->iteration = 0;
@@ -70,7 +70,7 @@ class Handler implements HandlerInterface
         if ($element->iteration >= $element->loop) {
             $this->app->planConsumer->logger->info('Speak Finished');
 
-            return resolve();
+            return resolve(null);
         }
 
         $this->app->planConsumer->logger->debug('Speaking ' . ($element->iteration + 1) . ' times ...');
@@ -80,7 +80,7 @@ class Handler implements HandlerInterface
                 if (!isset($event)) {
                     $this->app->planConsumer->logger->warning('Speak Break (empty event)');
 
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $this->app->planConsumer->logger->debug('Speak ' . ++$element->iteration . ' times done (' . $event->{'Application-Response'} . ')');

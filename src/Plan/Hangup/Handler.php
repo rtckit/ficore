@@ -49,7 +49,7 @@ class Handler implements HandlerInterface
                         $this->app->planConsumer->logger->error('Hangup Failed: ' . ($response->getBody() ?? '<null>'));
                     }
 
-                    return resolve();
+                    return resolve(null);
                 });
         }
 

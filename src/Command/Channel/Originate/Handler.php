@@ -56,7 +56,6 @@ class Handler extends AbstractHandler
             }
 
             assert(isset($job));
-            assert($job instanceof OriginateJob);
 
             $response->originateJobs[] = $job;
 
@@ -215,7 +214,7 @@ class Handler extends AbstractHandler
                 $job->originateStr = $originateStr;
 
                 $this->loopGateways($job)
-                    ->otherwise(function (\Throwable $t) {
+                    ->catch(function (\Throwable $t) {
                         $t = $t->getPrevious() ?: $t;
 
                         $this->app->eslClient->logger->error('Originate channel exception: ' . $t->getMessage(), [
@@ -323,7 +322,7 @@ class Handler extends AbstractHandler
                                 if ($success) {
                                     $this->app->commandConsumer->logger->info("Call Attempt OK for RequestUUID {$originateJob->uuid}");
 
-                                    return resolve();
+                                    return resolve(null);
                                 }
 
                                 $this->app->commandConsumer->logger->info("Call Attempt Failed for RequestUUID {$originateJob->uuid}, retrying next gateway ...");
@@ -337,7 +336,7 @@ class Handler extends AbstractHandler
 
                 return $this->loopGateways($originateJob);
             })
-            ->otherwise(function (\Throwable $t) {
+            ->catch(function (\Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
 
                 $this->app->eslClient->logger->error('loopGateways exception: ' . $t->getMessage(), [

@@ -31,7 +31,7 @@ class Handler implements HandlerInterface
         if (empty($element->medium)) {
             $this->app->planConsumer->logger->error('Invalid Sound File - Ignoring Play');
 
-            return resolve();
+            return resolve(null);
         }
 
         $element->setVars[] = 'playback_sleep_val=0';
@@ -65,7 +65,7 @@ class Handler implements HandlerInterface
                 if (!($response instanceof ESL\Response\CommandReply) || !$response->isSuccessful()) {
                     $this->app->planConsumer->logger->error('Play Failed - ' . ($response->getBody() ?? '<null>'));
 
-                    return resolve();
+                    return resolve(null);
                 }
 
                 return $this->app->planConsumer->waitForEvent($element->channel)
@@ -78,7 +78,7 @@ class Handler implements HandlerInterface
 
                         $this->app->planConsumer->logger->info('Play Finished');
 
-                        return resolve();
+                        return resolve(null);
                     });
             });
     }

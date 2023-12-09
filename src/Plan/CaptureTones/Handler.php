@@ -119,7 +119,7 @@ class Handler implements HandlerInterface
                     $this->app->planConsumer->logger->info('GetDigits, No Digits Received');
                 }
 
-                return resolve();
+                return resolve(null);
             });
     }
 }

@@ -41,7 +41,7 @@ class Handler implements HandlerInterface
             ->then(function () use ($element) {
                 return $this->app->planConsumer->waitForEvent($element->channel)
                     ->then(function () {
-                        return resolve();
+                        return resolve(null);
                     });
             });
     }

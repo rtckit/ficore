@@ -129,8 +129,6 @@ class Consumer extends AbstractConsumer
             $channel->context = $context;
         }
 
-        assert(is_string($targetSequence));
-
         $channel->client = $client;
         $channel->coreUuid = $channel->context['core-uuid'];
         $channel->callerName = urldecode($channel->context['caller-caller-id-name'] ?? '');
@@ -322,10 +320,10 @@ class Consumer extends AbstractConsumer
                     $this->logger->info('Reached end of plan');
                 }
             })
-            ->otherwise(function (HangupException $t) {
+            ->catch(function (HangupException $t) {
                 $this->logger->warning('Channel has hung up, breaking Processing Call', [$t->getMessage()]);
             })
-            ->otherwise(function (\Throwable $t) {
+            ->catch(function (\Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
 
                 $this->logger->error('Processing call failure: ' . $t->getMessage(), [
@@ -333,7 +331,7 @@ class Consumer extends AbstractConsumer
                     'line' => $t->getLine(),
                 ]);
             })
-            ->always(function () use ($channel) {
+            ->finally(function () use ($channel) {
                 $this->disconnect($channel);
                 $this->logger->info('Processing Call Ended');
             });
@@ -456,7 +454,7 @@ class Consumer extends AbstractConsumer
                 $deferred->reject(new HangupException());
             } else {
                 $this->logger->debug('wait for action end timed out!');
-                $deferred->resolve();
+                $deferred->resolve(null);
             }
         });
 
@@ -506,7 +504,7 @@ class Consumer extends AbstractConsumer
             ->then(function (?array $elements) use ($channel): PromiseInterface {
                 /** @var list<AbstractElement> $elements */
                 if (empty($elements)) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 if (isset($channel->hangupCause)) {
@@ -517,10 +515,10 @@ class Consumer extends AbstractConsumer
 
                 return $this->rewindExecuteSequence($channel);
             })
-            ->otherwise(function (HangupException $t) {
+            ->catch(function (HangupException $t) {
                 $this->logger->warning('Channel has hung up, breaking Processing Call', [$t->getMessage()]);
             })
-            ->otherwise(function (\Throwable $t) {
+            ->catch(function (\Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
 
                 $this->logger->error('Processing call failure: ' . $t->getMessage(), [
@@ -540,11 +538,10 @@ class Consumer extends AbstractConsumer
     public function executeSequence(Channel $channel): PromiseInterface
     {
         if (!count($channel->elements)) {
-            return resolve();
+            return resolve(null);
         }
 
         $element = array_shift($channel->elements);
-        assert($element instanceof AbstractElement);
 
         return $this->executeElement($channel, $element)
             ->then(function (?bool $break = null) use ($channel): PromiseInterface {
@@ -553,18 +550,18 @@ class Consumer extends AbstractConsumer
                 $this->logger->info("[{$elementType}] Done");
 
                 if ($break) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 if (isset($channel->transferInProgress)) {
                     $this->logger->info("Transfer in progress, breaking redirect");
 
-                    return resolve();
+                    return resolve(null);
                 }
 
                 return $this->executeSequence($channel);
             })
-            ->otherwise(function (\Throwable $t) {
+            ->catch(function (\Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
 
                 $this->logger->error('Plan exception: ' . $t->getMessage(), [
@@ -589,10 +586,10 @@ class Consumer extends AbstractConsumer
                 $channel->answered = true;
                 $channel->status = StatusEnum::InProgress;
 
-                return resolve();
+                return resolve(null);
             });
         } else {
-            $promise = resolve();
+            $promise = resolve(null);
         }
 
         $handler = $this->handlers[$element::class];
@@ -611,17 +608,17 @@ class Consumer extends AbstractConsumer
         )
             ->then(function (ESL\Response $response): PromiseInterface {
                 if (!($response instanceof ESL\Response\ApiResponse)) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 $body = $response->getBody();
 
                 if (empty($body)) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 if (($body === '_undef_') || (strpos($body, '-ERR') === 0)) {
-                    return resolve();
+                    return resolve(null);
                 }
 
                 return resolve($body);

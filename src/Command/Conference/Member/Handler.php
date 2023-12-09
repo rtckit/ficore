@@ -42,7 +42,7 @@ class Handler extends AbstractHandler
                         $this->app->commandConsumer->logger->debug("`conference {$request->conference->room} {$request->action->value} {$member}` success");
                     }
 
-                    return resolve();
+                    return resolve(null);
                 });
         }
 

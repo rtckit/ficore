@@ -177,7 +177,7 @@ class Client extends AbstractClient
             ->then(function () use ($config) {
                 $this->logger->info("Connected to FreeSWITCH @ {$config->eslHost}:{$config->eslPort}");
             })
-            ->otherwise(function (Throwable $t) use ($config) {
+            ->catch(function (Throwable $t) use ($config) {
                 $t = $t->getPrevious() ?: $t;
                 $this->logger->error("Cannot connect to FreeSWITCH @ {$config->eslHost}:{$config->eslPort}: " . $t->getMessage());
                 $this->reconnect($config);

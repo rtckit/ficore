@@ -60,7 +60,7 @@ class Handler extends AbstractHandler
                                         $this->app->commandConsumer->logger->error("Play Failed '{$command}': " . ($eslResponse->getBody() ?? '<null>'));
                                     }
 
-                                    return resolve();
+                                    return resolve(null);
                                 });
                         }
 
@@ -96,7 +96,7 @@ class Handler extends AbstractHandler
                                         $this->app->commandConsumer->logger->error("PlayStop Failed '{$command}': " . ($eslResponse->getBody() ?? '<null>'));
                                     }
 
-                                    return resolve();
+                                    return resolve(null);
                                 });
                         }
 
@@ -160,6 +160,7 @@ class Handler extends AbstractHandler
                 $ret = [];
 
                 foreach ($results as $commands) {
+                    assert(is_array($commands));
                     $ret = array_merge($ret, $commands);
                 }
 

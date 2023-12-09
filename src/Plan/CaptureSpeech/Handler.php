@@ -15,6 +15,7 @@ use React\Promise\{
     PromiseInterface
 };
 use RTCKit\ESL;
+use RTCKit\FiCore\Exception\FiCoreException;
 use RTCKit\FiCore\Plan\{
     AbstractElement,
     HandlerInterface,
@@ -63,9 +64,9 @@ class Handler implements HandlerInterface
                 if (!$response->isSuccessful()) {
                     $this->app->planConsumer->logger->error('GetSpeech Failed - ' . ($response->getBody() ?? '<null>'));
 
-                    $deferred->resolve();
+                    $deferred->resolve(null);
 
-                    return reject();
+                    return reject(new FiCoreException('GetSpeech Failed'));
                 }
 
                 return $element->channel->client->sendMsg(
@@ -118,6 +119,21 @@ class Handler implements HandlerInterface
                 return $this->app->planConsumer->waitForEvent($element->channel);
             })
             ->then(function (Event $event) use ($element): PromiseInterface {
+                if (
+                    ($event->{'Event-Name'} === 'DETECTED_SPEECH') &&
+                    in_array($event->{'Speech-Type'}, ['begin-speaking', 'detected-speech'])
+                ) {
+                    $this->app->planConsumer->logger->debug("GetSpeech Break ({$event->{'Speech-Type'}})");
+
+                    if ($event->{'Speech-Type'} === 'detected-speech') {
+                        $element->event = $event;
+                    }
+
+                    return $element->channel->client->bgApi(
+                        (new ESL\Request\BgApi())->setParameters('uuid_break ' . $element->channel->uuid . ' all')
+                    );
+                }
+
                 $response = $event->{'Application-Response'} ?? '<null>';
                 $this->app->planConsumer->logger->debug("GetSpeech prompt played ({$response})");
 
@@ -168,7 +184,7 @@ class Handler implements HandlerInterface
 
                     $signal->channel = $element->channel;
 
-                    if (isset($args['response'])) {
+                    if (isset($args['response']) && is_string($args['response'])) {
                         $resultXml = simplexml_load_string($args['response']);
                         if ($resultXml === false) {
                             $this->app->planConsumer->logger->error("GetSpeech result failure, cannot parse result");
@@ -222,7 +238,7 @@ class Handler implements HandlerInterface
             ->then(function (bool $break) use ($deferred) {
                 $deferred->resolve($break);
             })
-            ->otherwise(function (Throwable $t) {
+            ->catch(function (Throwable $t) {
                 $t = $t->getPrevious() ?: $t;
                 $this->app->planConsumer->logger->error("Unhandled getspeech element error: " . $t->getMessage(), [
                     'file' => $t->getFile(),
@@ -237,14 +253,23 @@ class Handler implements HandlerInterface
     {
         return $this->app->planConsumer->waitForEvent($element->channel)
             ->then(function (?Event $event) use ($element): PromiseInterface {
+                if (isset($element->event)) {
+                    $event = $element->event;
+                }
+
                 if (!isset($event)) {
                     $this->app->planConsumer->logger->warning('GetSpeech Break (empty event)');
 
-                    return resolve();
-                } elseif (($event->{'Event-Name'} === 'DETECTED_SPEECH') && ($event->{'Speech-Type'} === 'detected-speech')) {
-                    Loop::cancelTimer($element->timer);
+                    return resolve(null);
+                } else if (
+                    ($event->{'Event-Name'} === 'DETECTED_SPEECH') &&
+                    in_array($event->{'Speech-Type'}, ['begin-speaking', 'detected-speech'])
+                ) {
+                    if (isset($element->timer)) {
+                        Loop::cancelTimer($element->timer);
+                    }
 
-                    $this->app->planConsumer->logger->info("GetSpeech, result '{$event->_body}'");
+                    $this->app->planConsumer->logger->info("GetSpeech ({$event->{'Speech-Type'}}), result '{$event->_body}'");
 
                     return resolve($event->_body);
                 }

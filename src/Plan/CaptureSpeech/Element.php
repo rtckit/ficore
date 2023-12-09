@@ -8,6 +8,8 @@ use React\EventLoop\TimerInterface;
 
 use RTCKit\FiCore\Plan\AbstractElement;
 
+use stdClass as Event;
+
 class Element extends AbstractElement
 {
     public string $sequence;
@@ -19,6 +21,7 @@ class Element extends AbstractElement
     public string $grammar;
     public string $grammarPath;
     public TimerInterface $timer;
+    public Event $event;
 
     /** @var list<string> */
     public array $setVars = [];
