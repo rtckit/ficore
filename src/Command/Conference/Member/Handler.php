@@ -28,7 +28,7 @@ class Handler extends AbstractHandler
         $response->successful = true;
 
         foreach ($request->members as $member) {
-            $confCmd = $request->action->value;
+            $confCmd = "{$request->action->value} {$member}";
 
             switch ($request->action) {
                 case ActionEnum::ExtHold:
@@ -41,12 +41,18 @@ class Handler extends AbstractHandler
 
                 case ActionEnum::Play:
                 case ActionEnum::Stop:
+                    $confCmd = "{$request->action->value}";
+
                     if (isset($request->medium)) {
                         $confCmd .= " {$request->medium}";
                     }
 
+                    if ($member !== 'all') {
+                        $confCmd .= " {$member}";
+                    }
+
                 default:
-                    $apiCmd = "conference {$request->conference->room} {$confCmd} {$member}";
+                    $apiCmd = "conference {$request->conference->room} {$confCmd}";
                     $promises[] = $request->conference->core->client->api((new ESL\Request\Api())->setParameters($apiCmd))
                         ->then(function (ESL\Response\ApiResponse $eslResponse) use ($member, $response, $apiCmd): PromiseInterface {
                             if (!$eslResponse->isSuccessful()) {
