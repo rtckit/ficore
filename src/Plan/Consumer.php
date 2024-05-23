@@ -97,16 +97,17 @@ class Consumer extends AbstractConsumer
         }
 
         $outbound = $context['call-direction'] === 'outbound';
+        $prefix = $this->app->config->appPrefix ?? '';
 
-        if (!empty($context["variable_{$this->app->config->appPrefix}_transfer_seq"])) {
-            $targetSequence = urldecode($context["variable_{$this->app->config->appPrefix}_transfer_seq"]);
+        if (isset($context["variable_{$prefix}_transfer_seq"]) && strlen($context["variable_{$prefix}_transfer_seq"])) {
+            $targetSequence = urldecode($context["variable_{$prefix}_transfer_seq"]);
 
             $this->logger->info('Using TransferSequence ' . $targetSequence);
-        } elseif (!empty($context["variable_{$this->app->config->appPrefix}_answer_seq"])) {
-            $targetSequence = urldecode($context["variable_{$this->app->config->appPrefix}_answer_seq"]);
+        } else if (isset($context["variable_{$prefix}_answer_seq"]) && strlen($context["variable_{$prefix}_answer_seq"])) {
+            $targetSequence = urldecode($context["variable_{$prefix}_answer_seq"]);
 
             $this->logger->info('Using AnswerSequence ' . $targetSequence);
-        } elseif (!$outbound && !empty($this->app->config->defaultAnswerSequence)) {
+        } else if (!$outbound && !empty($this->app->config->defaultAnswerSequence)) {
             $targetSequence = $this->app->config->defaultAnswerSequence;
 
             $this->logger->info('Using DefaultAnswerSequence ' . $targetSequence);
@@ -144,7 +145,7 @@ class Consumer extends AbstractConsumer
             (new ESL\Request\SendMsg())
                 ->setHeader('call-command', 'execute')
                 ->setHeader('execute-app-name', 'multiset')
-                ->setHeader('execute-app-arg', $this->app->config->appPrefix . '_app=true hangup_after_bridge=false')
+                ->setHeader('execute-app-arg', $prefix . '_app=true hangup_after_bridge=false')
                 ->setHeader('event-lock', 'true')
         );
 
@@ -164,7 +165,7 @@ class Consumer extends AbstractConsumer
             }
         });
 
-        $tagPrefix = "variable_{$this->app->config->appPrefix}_tag_";
+        $tagPrefix = "variable_{$prefix}_tag_";
         $tagPrefixLength = strlen($tagPrefix);
 
         foreach ($channel->context as $key => $value) {
@@ -174,8 +175,8 @@ class Consumer extends AbstractConsumer
         }
 
         if ($channel->outbound) {
-            if (isset($channel->context["variable_{$this->app->config->appPrefix}_request_uuid"])) {
-                $originateJob = $core->getOriginateJob($channel->context["variable_{$this->app->config->appPrefix}_request_uuid"]);
+            if (isset($channel->context["variable_{$prefix}_request_uuid"])) {
+                $originateJob = $core->getOriginateJob($channel->context["variable_{$prefix}_request_uuid"]);
 
                 if (isset($originateJob)) {
                     $originateJob->channel = $channel;
@@ -184,28 +185,31 @@ class Consumer extends AbstractConsumer
             }
 
             $channel->calledNumber = urldecode(
-                $channel->context["variable_{$this->app->config->appPrefix}_to"]
+                $channel->context["variable_{$prefix}_to"]
                 ?? $channel->context['caller-destination-number']
                 ?? ''
             );
             $channel->callerNumber = urldecode(
-                $channel->context["variable_{$this->app->config->appPrefix}_from"]
+                $channel->context["variable_{$prefix}_from"]
                 ?? $channel->context['caller-caller-id-number']
                 ?? ''
             );
 
             $channel->aLegUuid = $channel->context['caller-unique-id'];
-            $channel->aLegRequestUuid = $channel->context["variable_{$this->app->config->appPrefix}_request_uuid"];
+            $channel->aLegRequestUuid = $channel->context["variable_{$prefix}_request_uuid"];
 
-            if (!empty($channel->context["variable_{$this->app->config->appPrefix}_sched_hangup_id"])) {
-                $channel->schedHangupId = $channel->context["variable_{$this->app->config->appPrefix}_sched_hangup_id"];
+            if (
+                isset($channel->context["variable_{$prefix}_sched_hangup_id"]) &&
+                strlen($channel->context["variable_{$prefix}_sched_hangup_id"])
+            ) {
+                $channel->schedHangupId = $channel->context["variable_{$prefix}_sched_hangup_id"];
             }
 
             $channel->status = StatusEnum::InProgress;
             $channel->answered = true;
         } else {
             $channel->calledNumber = urldecode(
-                $channel->context["variable_{$this->app->config->appPrefix}_destination_number"]
+                $channel->context["variable_{$prefix}_destination_number"]
                 ?? $channel->context['caller-destination-number']
                 ?? ''
             );
@@ -223,8 +227,8 @@ class Consumer extends AbstractConsumer
                 }
             }
 
-            if (!empty($channel->context["{$this->app->config->appPrefix}_sched_hangup_id"])) {
-                $channel->schedHangupId = $channel->context["variable_{$this->app->config->appPrefix}_sched_hangup_id"];
+            if (isset($channel->context["{$prefix}_sched_hangup_id"]) && strlen($channel->context["{$prefix}_sched_hangup_id"])) {
+                $channel->schedHangupId = $channel->context["variable_{$prefix}_sched_hangup_id"];
             }
 
             $channel->status = StatusEnum::Ringing;
@@ -238,7 +242,7 @@ class Consumer extends AbstractConsumer
                 (new ESL\Request\SendMsg())
                     ->setHeader('call-command', 'execute')
                     ->setHeader('execute-app-name', 'unset')
-                    ->setHeader('execute-app-arg', "{$this->app->config->appPrefix}_sched_hangup_id")
+                    ->setHeader('execute-app-arg', "{$prefix}_sched_hangup_id")
                     ->setHeader('event-lock', 'true')
             );
         }
@@ -247,15 +251,15 @@ class Consumer extends AbstractConsumer
 
         /* Check if AMD is enabled */
         if (
-            !empty($context["variable_{$this->app->config->appPrefix}_amd"]) &&
-            ($context["variable_{$this->app->config->appPrefix}_amd"] === 'on')
+            isset($context["variable_{$prefix}_amd"]) &&
+            ($context["variable_{$prefix}_amd"] === 'on')
         ) {
             /* If synchronous, call flow execution must be blocked until AMD resolution */
             if (
-                !empty($context["variable_{$this->app->config->appPrefix}_amd_async"]) &&
-                ($context["variable_{$this->app->config->appPrefix}_amd_async"] === 'off')
+                isset($context["variable_{$prefix}_amd_async"]) &&
+                ($context["variable_{$prefix}_amd_async"] === 'off')
             ) {
-                $amdTimeoutAdj = (int)$context["variable_{$this->app->config->appPrefix}_amd_timeout"] + 1;
+                $amdTimeoutAdj = (int)$context["variable_{$prefix}_amd_timeout"] + 1;
 
                 $this->logger->info('Activating synchronous AMD');
 
@@ -264,7 +268,7 @@ class Consumer extends AbstractConsumer
                         (new ESL\Request\SendMsg())
                             ->setHeader('call-command', 'execute')
                             ->setHeader('execute-app-name', 'set')
-                            ->setHeader('execute-app-arg', "{$this->app->config->appPrefix}_amd_seq={$channel->targetSequence}")
+                            ->setHeader('execute-app-arg', "{$prefix}_amd_seq={$channel->targetSequence}")
                             ->setHeader('event-lock', 'true')
                     ),
                     $channel->client->sendMsg(
@@ -307,7 +311,7 @@ class Consumer extends AbstractConsumer
             })
             ->then(function (?string $transferProgress) use ($channel): void {
                 if (!isset($channel->hangupCause)) {
-                    if ($transferProgress) {
+                    if (!is_null($transferProgress)) {
                         $this->logger->info('Transfer In Progress!');
                     } else {
                         $this->logger->info('No more Elements, Hangup Now!');
@@ -613,7 +617,7 @@ class Consumer extends AbstractConsumer
 
                 $body = $response->getBody();
 
-                if (empty($body)) {
+                if (is_null($body) || !strlen($body)) {
                     return resolve(null);
                 }
 

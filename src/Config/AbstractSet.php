@@ -61,7 +61,7 @@ class AbstractSet
     {
         $ret = self::parseHostPort($str, $ip, $port);
 
-        if ($ret) {
+        if (!is_null($ret)) {
             return $ret;
         }
 

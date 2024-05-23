@@ -220,7 +220,7 @@ class Handler extends AbstractHandler
                     }
                 }
 
-                if (!$uuid) {
+                if (is_null($uuid)) {
                     $this->app->commandConsumer->logger->warning('No BLeg found');
 
                     return resolve([]);
@@ -257,7 +257,7 @@ class Handler extends AbstractHandler
                     }
                 }
 
-                if (!$xml) {
+                if (is_null($xml) || ($xml === false)) {
                     $this->app->commandConsumer->logger->warning('cannot get displace_media_list: no list');
 
                     return resolve([]);
