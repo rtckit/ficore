@@ -10,6 +10,8 @@ enum ActionEnum: string
     case Unmute = 'unmute';
     case Deaf = 'deaf';
     case Undeaf = 'undeaf';
+    case Hold = 'hold';
+    case Unhold = 'unhold';
     case Kick = 'kick';
     case Hangup = 'hup';
 }
