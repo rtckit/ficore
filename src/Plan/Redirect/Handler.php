@@ -23,6 +23,7 @@ class Handler implements HandlerInterface
 {
     use HandlerTrait;
 
+    /** @var string */
     public const ELEMENT_TYPE = 'Redirect';
 
     public function execute(Channel $channel, AbstractElement $element): PromiseInterface

@@ -8,6 +8,7 @@ use RTCKit\FiCore\Switch\Channel;
 
 abstract class AbstractElement
 {
+    /** @var bool */
     public const NO_ANSWER = false;
 
     public Channel $channel;

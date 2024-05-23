@@ -39,6 +39,7 @@ use stdClass as Event;
 
 class Consumer extends AbstractConsumer
 {
+    /** @var list<string> */
     public const WAIT_FOR_APPLICATIONS = [
         'playback',
         'record',

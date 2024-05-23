@@ -20,6 +20,7 @@ class Core
 
     public bool $connected = false;
 
+    /** @var string */
     public const SPEC_REGEX = '/^(?:([^\:]+)\:)?([a-z0-9]+)@([^:]+):([0-9]+)$/mi';
 
     public static function parseSpec(string $spec): ?Core

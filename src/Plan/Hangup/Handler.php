@@ -26,8 +26,10 @@ class Handler implements HandlerInterface
 {
     use HandlerTrait;
 
+    /** @var string */
     public const ELEMENT_TYPE = 'Hangup';
 
+    /** @var bool */
     public const NO_ANSWER = true;
 
     public function execute(Channel $channel, AbstractElement $element): PromiseInterface

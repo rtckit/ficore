@@ -8,6 +8,7 @@ use Monolog\Level;
 
 class AbstractSet
 {
+    /** @var string */
     public const INBOUND_SOCKET_ADDRESS = 'inbound_socket_address';
 
     /* General settings */

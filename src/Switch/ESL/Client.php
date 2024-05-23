@@ -27,8 +27,10 @@ use Throwable;
 
 class Client extends AbstractClient
 {
+    /** @var int */
     public const RECONNECT_DEBOUNCE_FACTOR = 10;
 
+    /** @var int */
     public const RECONNECT_DEBOUNCE_LIMIT = 30;
 
     public function setApp(AbstractApp $app): static
