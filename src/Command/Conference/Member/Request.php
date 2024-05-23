@@ -15,4 +15,6 @@ class Request implements RequestInterface
 
     /** @var list<string> */
     public array $members = [];
+
+    public string $medium;
 }

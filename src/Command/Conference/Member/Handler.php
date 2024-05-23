@@ -28,27 +28,96 @@ class Handler extends AbstractHandler
         $response->successful = true;
 
         foreach ($request->members as $member) {
-            $promises[] = $request->conference->core->client->api(
-                (new ESL\Request\Api())->setParameters("conference {$request->conference->room} {$request->action->value} {$member}")
-            )
-                ->then(function (ESL\Response\ApiResponse $eslResponse) use ($request, $member, $response): PromiseInterface {
-                    if (!$eslResponse->isSuccessful()) {
-                        $response->successful = false;
+            $confCmd = $request->action->value;
 
-                        $this->app->commandConsumer->logger->warning("`conference {$request->conference->room} {$request->action->value} {$member}` failed");
-                    } else {
-                        $response->members[] = $member;
+            switch ($request->action) {
+                case ActionEnum::ExtHold:
+                    $promises[] = $this->executeExtHold($request, $member);
+                    break;
 
-                        $this->app->commandConsumer->logger->debug("`conference {$request->conference->room} {$request->action->value} {$member}` success");
+                case ActionEnum::ExtUnhold:
+                    $promises[] = $this->executeExtUnhold($request, $member);
+                    break;
+
+                case ActionEnum::Play:
+                case ActionEnum::Stop:
+                    if (isset($request->medium)) {
+                        $confCmd .= " {$request->medium}";
                     }
 
-                    return resolve(null);
-                });
+                default:
+                    $apiCmd = "conference {$request->conference->room} {$confCmd} {$member}";
+                    $promises[] = $request->conference->core->client->api((new ESL\Request\Api())->setParameters($apiCmd))
+                        ->then(function (ESL\Response\ApiResponse $eslResponse) use ($member, $response, $apiCmd): PromiseInterface {
+                            if (!$eslResponse->isSuccessful()) {
+                                $response->successful = false;
+
+                                $this->app->commandConsumer->logger->warning("`{$apiCmd}` failed");
+                            } else {
+                                $response->members[] = $member;
+
+                                $this->app->commandConsumer->logger->debug("`{$apiCmd}` success");
+                            }
+
+                            return resolve(null);
+                        });
+                    break;
+            }
         }
 
         return all($promises)
             ->then(function () use ($response): Response {
                 return $response;
             });
+    }
+
+    private function executeExtHold(Request $request, string $member): PromiseInterface
+    {
+        $deafRequest = clone $request;
+        $deafRequest->action = ActionEnum::Deaf;
+        $deafRequest->members = [$member];
+
+        $muteRequest = clone $request;
+        $muteRequest->action = ActionEnum::Mute;
+        $muteRequest->members = [$member];
+
+        $promises = [
+            'deaf' => $this->execute($deafRequest),
+            'mute' => $this->execute($muteRequest),
+        ];
+
+        if (isset($request->medium)) {
+            $playRequest = clone $request;
+            $playRequest->action = ActionEnum::Play;
+            $playRequest->members = [$member];
+
+            $promises['play'] = $this->execute($playRequest);
+        }
+
+        return all($promises);
+    }
+
+    private function executeExtUnhold(Request $request, string $member): PromiseInterface
+    {
+        $unmuteRequest = clone $request;
+        $unmuteRequest->action = ActionEnum::Unmute;
+        $unmuteRequest->members = [$member];
+
+        $undeafRequest = clone $request;
+        $undeafRequest->action = ActionEnum::Undeaf;
+        $undeafRequest->members = [$member];
+
+        $stopRequest = clone $request;
+        $stopRequest->action = ActionEnum::Stop;
+        $stopRequest->members = [$member];
+        $stopRequest->medium = 'current';
+
+        $promises = [
+            'unmute' => $this->execute($unmuteRequest),
+            'undeaf' => $this->execute($undeafRequest),
+            'stop' => $this->execute($stopRequest),
+        ];
+
+        return all($promises);
     }
 }
