@@ -8,6 +8,7 @@ use Monolog\Level;
 
 class AbstractSet
 {
+    /** @var string */
     public const INBOUND_SOCKET_ADDRESS = 'inbound_socket_address';
 
     /* General settings */
@@ -61,7 +62,7 @@ class AbstractSet
     {
         $ret = self::parseHostPort($str, $ip, $port);
 
-        if ($ret) {
+        if (!is_null($ret)) {
             return $ret;
         }
 

@@ -14,6 +14,7 @@ interface HandlerInterface
     /** @var string */
     public const ELEMENT_TYPE = 'default';
 
+    /** @var list<string> */
     public const NESTABLES = [];
 
     public function setApp(AbstractApp $app): static;

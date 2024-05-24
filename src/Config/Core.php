@@ -20,11 +20,14 @@ class Core
 
     public bool $connected = false;
 
+    /** @var string */
     public const SPEC_REGEX = '/^(?:([^\:]+)\:)?([a-z0-9]+)@([^:]+):([0-9]+)$/mi';
 
     public static function parseSpec(string $spec): ?Core
     {
-        if (!preg_match_all(self::SPEC_REGEX, $spec, $matches)) {
+        $count = preg_match_all(self::SPEC_REGEX, $spec, $matches);
+
+        if (($count === false) || ($count === 0)) {
             return null;
         }
 

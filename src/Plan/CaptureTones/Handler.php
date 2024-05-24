@@ -67,32 +67,30 @@ class Handler implements HandlerInterface
 
         $regExp = '^(' . implode('|', $digits) . ')+';
         $playStr = str_replace("'", "\\'", $playStr);
-        $promises = [];
 
-        if (isset($element->setVars[0])) {
-            $promises['set'] = $element->channel->client->sendMsg(
+        $promises = [
+            'set' => $element->channel->client->sendMsg(
                 (new ESL\Request\SendMsg())
                     ->setHeader('call-command', 'execute')
                     ->setHeader('execute-app-name', 'multiset')
                     ->setHeader('execute-app-arg', implode(' ', $element->setVars))
                     ->setHeader('event-lock', 'true')
-            );
-        }
-
-        $promises['pagd'] = $element->channel->client->sendMsg(
-            (new ESL\Request\SendMsg())
-                ->setHeader('call-command', 'execute')
-                ->setHeader('execute-app-name', 'play_and_get_digits')
-                ->setHeader(
-                    'execute-app-arg',
-                    '1 ' . $element->maxTones . ' ' .
-                    $element->tries . ' ' . $element->timeout . " '" .
-                    $element->terminators . "' '" . $playStr . "' " .
-                    $element->invalidMedium . ' pagd_input ' .
-                    $regExp . ' ' . $digitTimeout
-                )
-                ->setHeader('event-lock', 'true')
-        );
+            ),
+            'pagd' => $element->channel->client->sendMsg(
+                (new ESL\Request\SendMsg())
+                    ->setHeader('call-command', 'execute')
+                    ->setHeader('execute-app-name', 'play_and_get_digits')
+                    ->setHeader(
+                        'execute-app-arg',
+                        '1 ' . $element->maxTones . ' ' .
+                        $element->tries . ' ' . $element->timeout . " '" .
+                        $element->terminators . "' '" . $playStr . "' " .
+                        $element->invalidMedium . ' pagd_input ' .
+                        $regExp . ' ' . $digitTimeout
+                    )
+                    ->setHeader('event-lock', 'true')
+            ),
+        ];
 
         return all($promises)
             ->then(function () use ($element): PromiseInterface {

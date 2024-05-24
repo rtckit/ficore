@@ -21,6 +21,7 @@
         <TypeDoesNotContainType errorLevel="suppress" />
         <PossiblyUnusedReturnValue errorLevel="suppress" />
         <UnusedForeachValue errorLevel="suppress" />
+        <MissingClassConstType errorLevel="suppress" />
 
         <!-- https://github.com/vimeo/psalm/issues/4823 -->
         <RedundantPropertyInitializationCheck errorLevel="suppress" />

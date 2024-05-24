@@ -93,25 +93,22 @@ class Handler implements HandlerInterface
                     unset($element->channel->ttsVoice);
                 }
 
-                $promises = [];
-
-                if (isset($element->setVars[0])) {
-                    $promises['set'] = $element->channel->client->sendMsg(
+                $promises = [
+                    'set' => $element->channel->client->sendMsg(
                         (new ESL\Request\SendMsg())
                             ->setHeader('call-command', 'execute')
                             ->setHeader('execute-app-name', 'multiset')
                             ->setHeader('execute-app-arg', implode(' ', $element->setVars))
                             ->setHeader('event-lock', 'true')
-                    );
-                }
-
-                $promises['playback'] = $element->channel->client->sendMsg(
-                    (new ESL\Request\SendMsg())
-                        ->setHeader('call-command', 'execute')
-                        ->setHeader('execute-app-name', 'playback')
-                        ->setHeader('execute-app-arg', $playStr)
-                        ->setHeader('event-lock', 'true')
-                );
+                    ),
+                    'playback' => $element->channel->client->sendMsg(
+                        (new ESL\Request\SendMsg())
+                            ->setHeader('call-command', 'execute')
+                            ->setHeader('execute-app-name', 'playback')
+                            ->setHeader('execute-app-arg', $playStr)
+                            ->setHeader('event-lock', 'true')
+                    ),
+                ];
 
                 return all($promises);
             })
