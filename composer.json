@@ -38,7 +38,7 @@
         "wyrihaximus/react-psr-3-stdio": "^3.0"
     },
     "require-dev": {
-        "phpstan/phpstan": "^1.11",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.4",
         "vimeo/psalm": "^5.24"
     },
